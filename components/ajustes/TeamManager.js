@@ -22,6 +22,21 @@ export default function TeamManager({ initialItems, currentUserId }) {
     setDrafts((d) => ({ ...d, [id]: { ...d[id], ...patch } }));
   }
 
+  // El color se guarda al instante al cambiarlo (mismo patrón que
+  // Áreas/Desarrollos en Ajustes), no espera al botón "Guardar".
+  async function handleColor(item, color) {
+    setError("");
+    const supabase = createClient();
+    const { error: updateError } = await supabase.from("profiles").update({ color }).eq("id", item.id);
+    if (updateError) {
+      setError(updateError.message);
+      return;
+    }
+    const { data } = await supabase.from("profiles").select("*").order("name");
+    setItems(data || []);
+    router.refresh();
+  }
+
   async function handleSave(item) {
     const draft = drafts[item.id];
     const selfRevoke = item.id === currentUserId && item.sees_all && !draft.sees_all;
@@ -95,6 +110,13 @@ export default function TeamManager({ initialItems, currentUserId }) {
               >
                 {item.name?.slice(0, 1)}
               </span>
+              <input
+                type="color"
+                defaultValue={item.color}
+                onChange={(e) => handleColor(item, e.target.value)}
+                title="Cambiar color"
+                style={{ width: 26, height: 26, border: "none", padding: 0, background: "none", flex: "none" }}
+              />
               <input
                 value={draft.name}
                 onChange={(e) => setDraft(item.id, { name: e.target.value })}
