@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "./actions";
-import { groupTasks, GROUP_LABELS, computeKPIs } from "@/lib/data";
-import TaskCard from "@/components/TaskCard";
+import { groupTasks, computeKPIs } from "@/lib/data";
+import PendientesList from "@/components/PendientesList";
 import NewTaskForm from "@/components/NewTaskForm";
 
 export const dynamic = "force-dynamic";
@@ -171,31 +171,17 @@ export default async function Home() {
           </div>
         )}
 
-        {order.map((key) => {
-          const list = groups[key];
-          if (!list.length) return null;
-          return (
-            <div key={key} style={{ marginBottom: 22 }}>
-              <div
-                style={{
-                  fontSize: 12,
-                  fontWeight: 800,
-                  letterSpacing: "0.04em",
-                  textTransform: "uppercase",
-                  color: key === "atrasados" ? "var(--danger)" : "var(--ink-muted)",
-                  marginBottom: 8,
-                }}
-              >
-                {GROUP_LABELS[key]} · {list.length}
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {list.map((t) => (
-                  <TaskCard key={t.id} task={t} />
-                ))}
-              </div>
-            </div>
-          );
-        })}
+        <PendientesList
+          groups={groups}
+          order={order}
+          areas={areas || []}
+          types={types || []}
+          devs={devs || []}
+          projects={projects || []}
+          people={people || []}
+          currentUserId={user.id}
+          currentProfile={profile}
+        />
 
         {!tasks.length && !tasksError && (
           <p style={{ color: "var(--ink-muted)", fontSize: 13.5 }}>

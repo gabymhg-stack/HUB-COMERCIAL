@@ -8,7 +8,7 @@ import { daysBetween, todayISO, toLocalISO } from "@/lib/data";
 const PRIORITY_LABEL = { alta: "Alta", media: "Media", baja: "Baja" };
 const PRIORITY_COLOR = { alta: "var(--danger)", media: "var(--warning)", baja: "var(--ink-muted)" };
 
-export default function TaskCard({ task }) {
+export default function TaskCard({ task, onOpen }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [busy, setBusy] = useState(false);
@@ -38,6 +38,7 @@ export default function TaskCard({ task }) {
 
   return (
     <div
+      onClick={onOpen}
       style={{
         display: "flex",
         gap: 12,
@@ -47,6 +48,7 @@ export default function TaskCard({ task }) {
         borderRadius: 10,
         padding: "12px 14px",
         opacity: pending ? 0.6 : 1,
+        cursor: onOpen ? "pointer" : "default",
       }}
     >
       <button
