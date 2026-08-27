@@ -4,6 +4,7 @@ import { computeKPIs } from "@/lib/data";
 import PendientesList from "@/components/PendientesList";
 import NewTaskForm from "@/components/NewTaskForm";
 import Topbar from "@/components/Topbar";
+import Sidebar from "@/components/widgets/Sidebar";
 
 export const dynamic = "force-dynamic";
 
@@ -55,66 +56,80 @@ export default async function Home() {
     <div style={{ minHeight: "100vh" }}>
       <Topbar profile={profile} active="pendientes" />
 
-      <div style={{ maxWidth: 720, margin: "0 auto", padding: "24px 20px 60px" }}>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
-            gap: 10,
-            marginBottom: 18,
-          }}
-        >
-          {kpiCards.map((k) => (
-            <div
-              key={k.label}
-              style={{
-                background: "var(--surface)",
-                border: "1px solid var(--border)",
-                borderRadius: 10,
-                padding: "12px 14px",
-              }}
-            >
-              <div style={{ fontSize: 22, fontWeight: 800, color: k.color, lineHeight: 1.1 }}>
-                {k.value}
+      <div
+        style={{
+          maxWidth: 1040,
+          margin: "0 auto",
+          padding: "24px 20px 60px",
+          display: "flex",
+          gap: 24,
+          alignItems: "flex-start",
+          flexWrap: "wrap",
+        }}
+      >
+        <div style={{ flex: "1 1 480px", minWidth: 320 }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+              gap: 10,
+              marginBottom: 18,
+            }}
+          >
+            {kpiCards.map((k) => (
+              <div
+                key={k.label}
+                style={{
+                  background: "var(--surface)",
+                  border: "1px solid var(--border)",
+                  borderRadius: 10,
+                  padding: "12px 14px",
+                }}
+              >
+                <div style={{ fontSize: 22, fontWeight: 800, color: k.color, lineHeight: 1.1 }}>
+                  {k.value}
+                </div>
+                <div style={{ fontSize: 11.5, color: "var(--ink-muted)", marginTop: 3, fontWeight: 600 }}>
+                  {k.label}
+                </div>
               </div>
-              <div style={{ fontSize: 11.5, color: "var(--ink-muted)", marginTop: 3, fontWeight: 600 }}>
-                {k.label}
-              </div>
+            ))}
+          </div>
+
+          <NewTaskForm
+            areas={areas || []}
+            types={types || []}
+            devs={devs || []}
+            projects={projects || []}
+            people={people || []}
+            currentUserId={user.id}
+          />
+
+          {tasksError && (
+            <div style={{ color: "var(--danger)", marginBottom: 16, fontSize: 13 }}>
+              Error cargando pendientes: {tasksError.message}
             </div>
-          ))}
+          )}
+
+          <PendientesList
+            tasks={tasks}
+            areas={areas || []}
+            types={types || []}
+            devs={devs || []}
+            projects={projects || []}
+            people={people || []}
+            currentUserId={user.id}
+            currentProfile={profile}
+          />
+
+          {!tasks.length && !tasksError && (
+            <p style={{ color: "var(--ink-muted)", fontSize: 13.5 }}>
+              No hay pendientes todavía — crea el primero con el botón de arriba.
+            </p>
+          )}
         </div>
 
-        <NewTaskForm
-          areas={areas || []}
-          types={types || []}
-          devs={devs || []}
-          projects={projects || []}
-          people={people || []}
-          currentUserId={user.id}
-        />
-
-        {tasksError && (
-          <div style={{ color: "var(--danger)", marginBottom: 16, fontSize: 13 }}>
-            Error cargando pendientes: {tasksError.message}
-          </div>
-        )}
-
-        <PendientesList
-          tasks={tasks}
-          areas={areas || []}
-          types={types || []}
-          devs={devs || []}
-          projects={projects || []}
-          people={people || []}
-          currentUserId={user.id}
-          currentProfile={profile}
-        />
-
-        {!tasks.length && !tasksError && (
-          <p style={{ color: "var(--ink-muted)", fontSize: 13.5 }}>
-            No hay pendientes todavía — crea el primero con el botón de arriba.
-          </p>
-        )}
+        <Sidebar tasks={tasks} showParados={!!profile?.sees_all} />
       </div>
     </div>
   );
