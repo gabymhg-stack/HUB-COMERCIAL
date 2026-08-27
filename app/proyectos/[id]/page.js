@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { groupTasks } from "@/lib/data";
 import Topbar from "@/components/Topbar";
 import PendientesList from "@/components/PendientesList";
 import NewTaskForm from "@/components/NewTaskForm";
@@ -43,8 +42,6 @@ export default async function ProyectoDetailPage({ params }) {
   if (!project) return notFound();
 
   const tasks = tasksRaw || [];
-  const groups = groupTasks(tasks);
-  const order = ["atrasados", "hoy", "semana", "adelante", "completados"];
 
   return (
     <div style={{ minHeight: "100vh" }}>
@@ -84,8 +81,7 @@ export default async function ProyectoDetailPage({ params }) {
         />
 
         <PendientesList
-          groups={groups}
-          order={order}
+          tasks={tasks}
           areas={areas || []}
           types={types || []}
           devs={devs || []}

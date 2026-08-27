@@ -1,13 +1,38 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import TaskCard from "./TaskCard";
 import TaskDetailModal from "./TaskDetailModal";
-import { GROUP_LABELS } from "@/lib/data";
+import FiltersBar from "./FiltersBar";
+import { groupTasks, GROUP_LABELS } from "@/lib/data";
+
+const PRIORITY_ORDER = { alta: 0, media: 1, baja: 2 };
+
+function sortFlat(tasks, sortBy) {
+  const arr = [...tasks];
+  const doneWeight = (t) => (t.status === "completado" ? 1 : 0);
+  if (sortBy === "prioridad") {
+    arr.sort(
+      (a, b) =>
+        doneWeight(a) - doneWeight(b) ||
+        PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority] ||
+        (a.due_date || "9999").localeCompare(b.due_date || "9999")
+    );
+  } else if (sortBy === "fecha") {
+    arr.sort((a, b) => doneWeight(a) - doneWeight(b) || (a.due_date || "9999").localeCompare(b.due_date || "9999"));
+  } else if (sortBy === "proyecto") {
+    arr.sort(
+      (a, b) =>
+        doneWeight(a) - doneWeight(b) ||
+        (a.project?.name || "zzzzz").localeCompare(b.project?.name || "zzzzz") ||
+        (a.title || "").localeCompare(b.title || "")
+    );
+  }
+  return arr;
+}
 
 export default function PendientesList({
-  groups,
-  order,
+  tasks,
   areas,
   types,
   devs,
@@ -17,34 +42,72 @@ export default function PendientesList({
   currentProfile,
 }) {
   const [openTask, setOpenTask] = useState(null);
+  const [filters, setFilters] = useState({ areas: [], types: [], priorities: [], projects: [] });
+  const [sortBy, setSortBy] = useState("urgencia");
+
+  const filtered = useMemo(() => {
+    return tasks.filter((t) => {
+      if (filters.areas.length && !filters.areas.includes(t.area_id)) return false;
+      if (filters.types.length && !filters.types.includes(t.type_id)) return false;
+      if (filters.priorities.length && !filters.priorities.includes(t.priority)) return false;
+      if (filters.projects.length && !filters.projects.includes(t.project_id)) return false;
+      return true;
+    });
+  }, [tasks, filters]);
+
+  const order = ["atrasados", "hoy", "semana", "adelante", "completados"];
+  const groups = sortBy === "urgencia" ? groupTasks(filtered) : null;
+  const flatList = sortBy === "urgencia" ? null : sortFlat(filtered, sortBy);
 
   return (
     <>
-      {order.map((key) => {
-        const list = groups[key];
-        if (!list.length) return null;
-        return (
-          <div key={key} style={{ marginBottom: 22 }}>
-            <div
-              style={{
-                fontSize: 12,
-                fontWeight: 800,
-                letterSpacing: "0.04em",
-                textTransform: "uppercase",
-                color: key === "atrasados" ? "var(--danger)" : "var(--ink-muted)",
-                marginBottom: 8,
-              }}
-            >
-              {GROUP_LABELS[key]} · {list.length}
+      <FiltersBar
+        areas={areas}
+        types={types}
+        projects={projects}
+        filters={filters}
+        setFilters={setFilters}
+        sortBy={sortBy}
+        setSortBy={setSortBy}
+      />
+
+      {groups &&
+        order.map((key) => {
+          const list = groups[key];
+          if (!list.length) return null;
+          return (
+            <div key={key} style={{ marginBottom: 22 }}>
+              <div
+                style={{
+                  fontSize: 12,
+                  fontWeight: 800,
+                  letterSpacing: "0.04em",
+                  textTransform: "uppercase",
+                  color: key === "atrasados" ? "var(--danger)" : "var(--ink-muted)",
+                  marginBottom: 8,
+                }}
+              >
+                {GROUP_LABELS[key]} · {list.length}
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {list.map((t) => (
+                  <TaskCard key={t.id} task={t} onOpen={() => setOpenTask(t)} />
+                ))}
+              </div>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {list.map((t) => (
-                <TaskCard key={t.id} task={t} onOpen={() => setOpenTask(t)} />
-              ))}
-            </div>
-          </div>
-        );
-      })}
+          );
+        })}
+
+      {flatList && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 22 }}>
+          {flatList.map((t) => (
+            <TaskCard key={t.id} task={t} onOpen={() => setOpenTask(t)} />
+          ))}
+          {flatList.length === 0 && (
+            <p style={{ color: "var(--ink-muted)", fontSize: 13.5 }}>Nada coincide con esos filtros.</p>
+          )}
+        </div>
+      )}
 
       {openTask && (
         <TaskDetailModal

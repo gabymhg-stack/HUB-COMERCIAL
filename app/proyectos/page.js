@@ -1,84 +1,120 @@
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { signOut } from "./actions";
+import { computeKPIs } from "@/lib/data";
+import PendientesList from "@/components/PendientesList";
+import NewTaskForm from "@/components/NewTaskForm";
 import Topbar from "@/components/Topbar";
-import NewProjectForm from "@/components/proyectos/NewProjectForm";
 
 export const dynamic = "force-dynamic";
 
-export default async function ProyectosPage() {
+export default async function Home() {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [{ data: profile }, { data: devs }, { data: projects }, { data: taskCounts }] = await Promise.all([
-    supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(),
-    supabase.from("dev_tags").select("*").order("name"),
-    supabase
-      .from("projects")
-      .select("*, dev:dev_tags(id,name,color), owner:profiles(id,name,color)")
-      .order("name"),
-    supabase.from("tasks").select("project_id, status").not("project_id", "is", null),
-  ]);
+  const [{ data: profile }, { data: areas }, { data: types }, { data: devs }, { data: projects }, { data: people }, { data: tasksRaw, error: tasksError }] =
+    await Promise.all([
+      supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(),
+      supabase.from("areas").select("*").order("name"),
+      supabase.from("type_labels").select("*").order("name"),
+      supabase.from("dev_tags").select("*").order("name"),
+      supabase.from("projects").select("*").order("name"),
+      supabase.from("profiles").select("*").order("name"),
+      supabase
+        .from("tasks")
+        .select(
+          "*, area:areas(id,name,color), dev:dev_tags(id,name,color), type:type_labels(id,name), project:projects(id,name), owners:task_owners(person:profiles(id,name,color))"
+        ),
+    ]);
 
-  const counts = {};
-  for (const t of taskCounts || []) {
-    if (!counts[t.project_id]) counts[t.project_id] = { total: 0, done: 0 };
-    counts[t.project_id].total++;
-    if (t.status === "completado") counts[t.project_id].done++;
+  if (!profile) {
+    return (
+      <div style={{ padding: 40 }}>
+        <p>
+          Tu usuario existe en el login pero no tiene una fila en <code>profiles</code> todavía.
+          Pídele a Gaby que corra el <code>insert into profiles</code> con tu User UID.
+        </p>
+        <form action={signOut}>
+          <button type="submit">Cerrar sesión</button>
+        </form>
+      </div>
+    );
   }
+
+  const tasks = tasksRaw || [];
+  const kpis = computeKPIs(tasks);
+  const kpiCards = [
+    { label: "Activos", value: kpis.activos, color: "var(--ink)" },
+    { label: "Atrasados", value: kpis.atrasados, color: "var(--danger)" },
+    { label: "Parados por Enrique", value: kpis.parados, color: "#b5651d" },
+    { label: "Completados esta semana", value: kpis.completadosSemana, color: "var(--good)" },
+  ];
 
   return (
     <div style={{ minHeight: "100vh" }}>
-      <Topbar profile={profile} active="proyectos" />
-      <div style={{ maxWidth: 780, margin: "0 auto", padding: "24px 20px 60px" }}>
-        <h1 style={{ fontSize: 18, fontWeight: 800, marginBottom: 4 }}>Proyectos</h1>
-        <p style={{ fontSize: 12.5, color: "var(--ink-muted)", marginBottom: 18 }}>
-          Un proyecto agrupa subtareas de distintas personas. Cualquiera puede crear uno.
-        </p>
+      <Topbar profile={profile} active="pendientes" />
 
-        <NewProjectForm devs={devs || []} currentUserId={user.id} />
-
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {(projects || []).map((p) => {
-            const c = counts[p.id] || { total: 0, done: 0 };
-            return (
-              <Link
-                key={p.id}
-                href={`/proyectos/${p.id}`}
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  gap: 12,
-                  background: "var(--surface)",
-                  border: "1px solid var(--border)",
-                  borderLeft: `4px solid ${p.dev?.color || "var(--accent)"}`,
-                  borderRadius: 10,
-                  padding: "12px 14px",
-                  textDecoration: "none",
-                  color: "var(--ink)",
-                }}
-              >
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: 14 }}>{p.name}</div>
-                  <div style={{ fontSize: 11.5, color: "var(--ink-muted)", marginTop: 3 }}>
-                    {p.dev ? p.dev.name + " · " : ""}
-                    {c.total} subtarea{c.total === 1 ? "" : "s"}
-                    {c.total > 0 ? ` · ${c.done} completada${c.done === 1 ? "" : "s"}` : ""}
-                    {p.owner ? ` · Dueño: ${p.owner.name}` : ""}
-                  </div>
-                </div>
-                <span style={{ fontSize: 18, color: "var(--ink-muted)" }}>›</span>
-              </Link>
-            );
-          })}
-          {(!projects || projects.length === 0) && (
-            <p style={{ color: "var(--ink-muted)", fontSize: 13.5 }}>
-              No hay proyectos todavía — crea el primero con el botón de arriba.
-            </p>
-          )}
+      <div style={{ maxWidth: 720, margin: "0 auto", padding: "24px 20px 60px" }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+            gap: 10,
+            marginBottom: 18,
+          }}
+        >
+          {kpiCards.map((k) => (
+            <div
+              key={k.label}
+              style={{
+                background: "var(--surface)",
+                border: "1px solid var(--border)",
+                borderRadius: 10,
+                padding: "12px 14px",
+              }}
+            >
+              <div style={{ fontSize: 22, fontWeight: 800, color: k.color, lineHeight: 1.1 }}>
+                {k.value}
+              </div>
+              <div style={{ fontSize: 11.5, color: "var(--ink-muted)", marginTop: 3, fontWeight: 600 }}>
+                {k.label}
+              </div>
+            </div>
+          ))}
         </div>
+
+        <NewTaskForm
+          areas={areas || []}
+          types={types || []}
+          devs={devs || []}
+          projects={projects || []}
+          people={people || []}
+          currentUserId={user.id}
+        />
+
+        {tasksError && (
+          <div style={{ color: "var(--danger)", marginBottom: 16, fontSize: 13 }}>
+            Error cargando pendientes: {tasksError.message}
+          </div>
+        )}
+
+        <PendientesList
+          tasks={tasks}
+          areas={areas || []}
+          types={types || []}
+          devs={devs || []}
+          projects={projects || []}
+          people={people || []}
+          currentUserId={user.id}
+          currentProfile={profile}
+        />
+
+        {!tasks.length && !tasksError && (
+          <p style={{ color: "var(--ink-muted)", fontSize: 13.5 }}>
+            No hay pendientes todavía — crea el primero con el botón de arriba.
+          </p>
+        )}
       </div>
     </div>
   );
