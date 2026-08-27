@@ -13,6 +13,7 @@ export default function TaskCard({ task, onOpen }) {
   const [pending, startTransition] = useTransition();
   const [busy, setBusy] = useState(false);
   const done = task.status === "completado";
+  const inProgress = task.status === "en_proceso";
 
   async function toggleDone(e) {
     e.stopPropagation();
@@ -58,8 +59,8 @@ export default function TaskCard({ task, onOpen }) {
           width: 20,
           height: 20,
           borderRadius: "50%",
-          border: `1.5px solid ${done ? "var(--good)" : "var(--border-strong)"}`,
-          background: done ? "var(--good)" : "var(--surface-2)",
+          border: `1.5px solid ${done ? "var(--good)" : inProgress ? "var(--accent)" : "var(--border-strong)"}`,
+          background: done ? "var(--good)" : inProgress ? "var(--accent)" : "var(--surface-2)",
           color: "#fff",
           flex: "none",
           marginTop: 2,
@@ -71,7 +72,7 @@ export default function TaskCard({ task, onOpen }) {
           padding: 0,
         }}
       >
-        {done ? "✓" : ""}
+        {done ? "✓" : inProgress ? "•" : ""}
       </button>
 
       <div style={{ flex: 1, minWidth: 0 }}>
@@ -120,6 +121,9 @@ export default function TaskCard({ task, onOpen }) {
         <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 6, fontSize: 11 }}>
           <Badge>{task.area?.name}</Badge>
           {task.type && <Badge>{task.type.name}</Badge>}
+          {inProgress && (
+            <span style={{ color: "var(--accent)", fontWeight: 700 }}>● En proceso</span>
+          )}
           <span style={{ color: PRIORITY_COLOR[task.priority], fontWeight: 700 }}>
             {PRIORITY_LABEL[task.priority]}
           </span>
