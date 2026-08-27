@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "./actions";
-import { groupTasks, GROUP_LABELS } from "@/lib/data";
+import { groupTasks, GROUP_LABELS, computeKPIs } from "@/lib/data";
 import TaskCard from "@/components/TaskCard";
 import NewTaskForm from "@/components/NewTaskForm";
 
@@ -43,7 +43,14 @@ export default async function Home() {
 
   const tasks = tasksRaw || [];
   const groups = groupTasks(tasks);
+  const kpis = computeKPIs(tasks);
   const order = ["atrasados", "hoy", "semana", "adelante", "completados"];
+  const kpiCards = [
+    { label: "Activos", value: kpis.activos, color: "var(--ink)" },
+    { label: "Atrasados", value: kpis.atrasados, color: "var(--danger)" },
+    { label: "Parados por Enrique", value: kpis.parados, color: "#b5651d" },
+    { label: "Completados esta semana", value: kpis.completadosSemana, color: "var(--good)" },
+  ];
 
   return (
     <div style={{ minHeight: "100vh" }}>
@@ -121,6 +128,34 @@ export default async function Home() {
       </div>
 
       <div style={{ maxWidth: 720, margin: "0 auto", padding: "24px 20px 60px" }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+            gap: 10,
+            marginBottom: 18,
+          }}
+        >
+          {kpiCards.map((k) => (
+            <div
+              key={k.label}
+              style={{
+                background: "var(--surface)",
+                border: "1px solid var(--border)",
+                borderRadius: 10,
+                padding: "12px 14px",
+              }}
+            >
+              <div style={{ fontSize: 22, fontWeight: 800, color: k.color, lineHeight: 1.1 }}>
+                {k.value}
+              </div>
+              <div style={{ fontSize: 11.5, color: "var(--ink-muted)", marginTop: 3, fontWeight: 600 }}>
+                {k.label}
+              </div>
+            </div>
+          ))}
+        </div>
+
         <NewTaskForm
           areas={areas || []}
           types={types || []}

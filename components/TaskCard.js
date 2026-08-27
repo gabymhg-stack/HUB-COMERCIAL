@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { daysBetween, todayISO } from "@/lib/data";
+import { daysBetween, todayISO, toLocalISO } from "@/lib/data";
 
 const PRIORITY_LABEL = { alta: "Alta", media: "Media", baja: "Baja" };
 const PRIORITY_COLOR = { alta: "var(--danger)", media: "var(--warning)", baja: "var(--ink-muted)" };
@@ -32,7 +32,7 @@ export default function TaskCard({ task }) {
   }
 
   const owners = (task.owners || []).map((o) => o.person).filter(Boolean);
-  const createdDays = daysBetween(task.created_at?.slice(0, 10) || todayISO(), todayISO());
+  const createdDays = daysBetween(toLocalISO(task.created_at) || todayISO(), todayISO());
   const overdueDays =
     task.due_date && !done ? Math.max(0, daysBetween(task.due_date, todayISO())) : 0;
 
