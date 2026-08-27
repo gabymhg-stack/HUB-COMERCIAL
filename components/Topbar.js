@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { signOut } from "@/app/actions";
+import ThemeToggle from "./ThemeToggle";
 
 export default function Topbar({ profile, active }) {
   return (
@@ -49,6 +50,7 @@ export default function Topbar({ profile, active }) {
       </div>
 
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <ThemeToggle />
         <span
           style={{
             width: 26,

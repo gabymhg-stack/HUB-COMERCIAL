@@ -14,6 +14,25 @@
   --danger: #e0503a;
 }
 
+/* Modo oscuro — se activa con el switch manual de la barra superior
+   (ThemeToggle), que pone data-theme="dark" en <html>. No sigue la
+   preferencia del sistema operativo, es 100% manual por persona. */
+:root[data-theme="dark"] {
+  --bg: #17161b;
+  --surface: #1f1e25;
+  --surface-2: #27262f;
+  --border: #35333e;
+  --border-strong: #45424f;
+  --ink: #eeece7;
+  --ink-2: #bcb9b1;
+  --ink-muted: #8a877f;
+  --accent: #8d7cf0;
+  --accent-ink: #17161b;
+  --good: #34c98c;
+  --warning: #f0ab3a;
+  --danger: #f0725a;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -29,6 +48,7 @@ body {
   color: var(--ink);
   font-family: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   -webkit-font-smoothing: antialiased;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 a {
