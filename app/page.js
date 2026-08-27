@@ -1,10 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "./actions";
-import { computeKPIs } from "@/lib/data";
-import PendientesList from "@/components/PendientesList";
-import NewTaskForm from "@/components/NewTaskForm";
 import Topbar from "@/components/Topbar";
-import Sidebar from "@/components/widgets/Sidebar";
+import HomeView from "@/components/HomeView";
 
 export const dynamic = "force-dynamic";
 
@@ -43,94 +40,20 @@ export default async function Home() {
     );
   }
 
-  const tasks = tasksRaw || [];
-  const kpis = computeKPIs(tasks);
-  const kpiCards = [
-    { label: "Activos", value: kpis.activos, color: "var(--ink)" },
-    { label: "Atrasados", value: kpis.atrasados, color: "var(--danger)" },
-    { label: "Parados por Enrique", value: kpis.parados, color: "#b5651d" },
-    { label: "Completados esta semana", value: kpis.completadosSemana, color: "var(--good)" },
-  ];
-
   return (
     <div style={{ minHeight: "100vh" }}>
       <Topbar profile={profile} active="pendientes" />
-
-      <div
-        style={{
-          maxWidth: 1040,
-          margin: "0 auto",
-          padding: "24px 20px 60px",
-          display: "flex",
-          gap: 24,
-          alignItems: "flex-start",
-          flexWrap: "wrap",
-        }}
-      >
-        <div style={{ flex: "1 1 480px", minWidth: 320 }}>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
-              gap: 10,
-              marginBottom: 18,
-            }}
-          >
-            {kpiCards.map((k) => (
-              <div
-                key={k.label}
-                style={{
-                  background: "var(--surface)",
-                  border: "1px solid var(--border)",
-                  borderRadius: 10,
-                  padding: "12px 14px",
-                }}
-              >
-                <div style={{ fontSize: 22, fontWeight: 800, color: k.color, lineHeight: 1.1 }}>
-                  {k.value}
-                </div>
-                <div style={{ fontSize: 11.5, color: "var(--ink-muted)", marginTop: 3, fontWeight: 600 }}>
-                  {k.label}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <NewTaskForm
-            areas={areas || []}
-            types={types || []}
-            devs={devs || []}
-            projects={projects || []}
-            people={people || []}
-            currentUserId={user.id}
-          />
-
-          {tasksError && (
-            <div style={{ color: "var(--danger)", marginBottom: 16, fontSize: 13 }}>
-              Error cargando pendientes: {tasksError.message}
-            </div>
-          )}
-
-          <PendientesList
-            tasks={tasks}
-            areas={areas || []}
-            types={types || []}
-            devs={devs || []}
-            projects={projects || []}
-            people={people || []}
-            currentUserId={user.id}
-            currentProfile={profile}
-          />
-
-          {!tasks.length && !tasksError && (
-            <p style={{ color: "var(--ink-muted)", fontSize: 13.5 }}>
-              No hay pendientes todavía — crea el primero con el botón de arriba.
-            </p>
-          )}
-        </div>
-
-        <Sidebar tasks={tasks} showParados={!!profile?.sees_all} />
-      </div>
+      <HomeView
+        profile={profile}
+        areas={areas || []}
+        types={types || []}
+        devs={devs || []}
+        projects={projects || []}
+        people={people || []}
+        tasks={tasksRaw || []}
+        tasksError={tasksError?.message}
+        currentUserId={user.id}
+      />
     </div>
   );
 }
