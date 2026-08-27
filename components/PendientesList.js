@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import TaskCard from "./TaskCard";
 import TaskDetailModal from "./TaskDetailModal";
 import FiltersBar from "./FiltersBar";
+import PersonSwitcher from "./PersonSwitcher";
 import { groupTasks, GROUP_LABELS } from "@/lib/data";
 
 const PRIORITY_ORDER = { alta: 0, media: 1, baja: 2 };
@@ -44,16 +45,18 @@ export default function PendientesList({
   const [openTask, setOpenTask] = useState(null);
   const [filters, setFilters] = useState({ areas: [], types: [], priorities: [], projects: [] });
   const [sortBy, setSortBy] = useState("urgencia");
+  const [personFilter, setPersonFilter] = useState(null); // null = "Todo el equipo"
 
   const filtered = useMemo(() => {
     return tasks.filter((t) => {
+      if (personFilter && !t.owners?.some((o) => o.person?.id === personFilter)) return false;
       if (filters.areas.length && !filters.areas.includes(t.area_id)) return false;
       if (filters.types.length && !filters.types.includes(t.type_id)) return false;
       if (filters.priorities.length && !filters.priorities.includes(t.priority)) return false;
       if (filters.projects.length && !filters.projects.includes(t.project_id)) return false;
       return true;
     });
-  }, [tasks, filters]);
+  }, [tasks, filters, personFilter]);
 
   const order = ["atrasados", "hoy", "semana", "adelante", "completados"];
   const groups = sortBy === "urgencia" ? groupTasks(filtered) : null;
@@ -61,6 +64,10 @@ export default function PendientesList({
 
   return (
     <>
+      {currentProfile?.sees_all && people?.length > 0 && (
+        <PersonSwitcher people={people} active={personFilter} onChange={setPersonFilter} />
+      )}
+
       <FiltersBar
         areas={areas}
         types={types}
