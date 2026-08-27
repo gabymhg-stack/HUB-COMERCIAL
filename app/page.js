@@ -1,5 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "./actions";
+import { groupTasks, GROUP_LABELS } from "@/lib/data";
+import TaskCard from "@/components/TaskCard";
+import NewTaskForm from "@/components/NewTaskForm";
+
+export const dynamic = "force-dynamic";
 
 export default async function Home() {
   const supabase = await createClient();
@@ -7,33 +12,96 @@ export default async function Home() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // El middleware ya garantiza que aquí siempre hay un usuario autenticado.
-  const { data: profile, error: profileError } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .maybeSingle();
+  const [{ data: profile }, { data: areas }, { data: types }, { data: devs }, { data: projects }, { data: people }, { data: tasksRaw, error: tasksError }] =
+    await Promise.all([
+      supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(),
+      supabase.from("areas").select("*").order("name"),
+      supabase.from("type_labels").select("*").order("name"),
+      supabase.from("dev_tags").select("*").order("name"),
+      supabase.from("projects").select("*").order("name"),
+      supabase.from("profiles").select("*").order("name"),
+      supabase
+        .from("tasks")
+        .select(
+          "*, area:areas(id,name,color), dev:dev_tags(id,name,color), type:type_labels(id,name), project:projects(id,name), owners:task_owners(person:profiles(id,name,color))"
+        ),
+    ]);
 
-  const { count: taskCount, error: tasksError } = await supabase
-    .from("tasks")
-    .select("*", { count: "exact", head: true });
+  if (!profile) {
+    return (
+      <div style={{ padding: 40 }}>
+        <p>
+          Tu usuario existe en el login pero no tiene una fila en <code>profiles</code> todavía.
+          Pídele a Gaby que corra el <code>insert into profiles</code> con tu User UID.
+        </p>
+        <form action={signOut}>
+          <button type="submit">Cerrar sesión</button>
+        </form>
+      </div>
+    );
+  }
 
-  const { count: areaCount } = await supabase
-    .from("areas")
-    .select("*", { count: "exact", head: true });
+  const tasks = tasksRaw || [];
+  const groups = groupTasks(tasks);
+  const order = ["atrasados", "hoy", "semana", "adelante", "completados"];
 
   return (
-    <div style={{ minHeight: "100vh", padding: "40px 20px" }}>
-      <div style={{ maxWidth: 560, margin: "0 auto" }}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: 24,
-          }}
-        >
-          <h1 style={{ fontSize: 20, fontWeight: 800, margin: 0 }}>HUB Control Comercial</h1>
+    <div style={{ minHeight: "100vh" }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          padding: "16px 24px",
+          borderBottom: "1px solid var(--border)",
+          background: "var(--surface)",
+          position: "sticky",
+          top: 0,
+          zIndex: 10,
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <span
+            style={{
+              width: 30,
+              height: 30,
+              borderRadius: 8,
+              background: "var(--accent)",
+              color: "#fff",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontWeight: 800,
+            }}
+          >
+            P
+          </span>
+          <div>
+            <div style={{ fontWeight: 800, fontSize: 16, lineHeight: 1.1 }}>HUB Control Comercial</div>
+            <div style={{ fontSize: 11, color: "var(--ink-muted)" }}>POP</div>
+          </div>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <span
+            style={{
+              width: 26,
+              height: 26,
+              borderRadius: "50%",
+              background: profile.color,
+              color: "#fff",
+              fontSize: 12,
+              fontWeight: 700,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            {profile.name?.slice(0, 1)}
+          </span>
+          <div style={{ fontSize: 12.5 }}>
+            <div style={{ fontWeight: 700 }}>{profile.name}</div>
+            <div style={{ color: "var(--ink-muted)" }}>{profile.role}</div>
+          </div>
           <form action={signOut}>
             <button
               type="submit"
@@ -42,7 +110,7 @@ export default async function Home() {
                 background: "var(--surface-2)",
                 borderRadius: 8,
                 padding: "7px 12px",
-                fontSize: 12.5,
+                fontSize: 12,
                 fontWeight: 600,
               }}
             >
@@ -50,78 +118,55 @@ export default async function Home() {
             </button>
           </form>
         </div>
-
-        <div
-          style={{
-            background: "var(--surface)",
-            border: "1px solid var(--border-strong)",
-            borderRadius: 14,
-            padding: 24,
-          }}
-        >
-          <p style={{ fontSize: 13, color: "var(--ink-muted)", margin: "0 0 16px" }}>
-            Esta es la base de la app real — todavía no tiene las pantallas del prototipo
-            (pendientes, proyectos, ajustes). Sirve para confirmar que el login, la base de
-            datos y el despliegue ya están conectados de punta a punta.
-          </p>
-
-          <Row label="Sesión iniciada como" value={user.email} ok />
-          <Row
-            label="Perfil en la tabla profiles"
-            value={
-              profile
-                ? `${profile.name} · ${profile.role}`
-                : "No encontrado — falta crear tu fila en profiles (ver instrucciones)"
-            }
-            ok={!!profile}
-          />
-          <Row
-            label="Conexión a la base de datos"
-            value={
-              tasksError
-                ? `Error: ${tasksError.message}`
-                : `OK — ${taskCount ?? 0} pendientes, ${areaCount ?? 0} áreas`
-            }
-            ok={!tasksError}
-          />
-        </div>
       </div>
-    </div>
-  );
-}
 
-function Row({ label, value, ok }) {
-  return (
-    <div
-      style={{
-        display: "flex",
-        gap: 10,
-        alignItems: "flex-start",
-        padding: "10px 0",
-        borderTop: "1px solid var(--border)",
-      }}
-    >
-      <span
-        style={{
-          width: 18,
-          height: 18,
-          borderRadius: "50%",
-          flex: "none",
-          marginTop: 1,
-          background: ok ? "var(--good)" : "var(--warning)",
-          color: "#fff",
-          fontSize: 11,
-          fontWeight: 800,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        {ok ? "✓" : "!"}
-      </span>
-      <div>
-        <div style={{ fontSize: 12, color: "var(--ink-muted)", fontWeight: 600 }}>{label}</div>
-        <div style={{ fontSize: 14 }}>{value}</div>
+      <div style={{ maxWidth: 720, margin: "0 auto", padding: "24px 20px 60px" }}>
+        <NewTaskForm
+          areas={areas || []}
+          types={types || []}
+          devs={devs || []}
+          projects={projects || []}
+          people={people || []}
+          currentUserId={user.id}
+        />
+
+        {tasksError && (
+          <div style={{ color: "var(--danger)", marginBottom: 16, fontSize: 13 }}>
+            Error cargando pendientes: {tasksError.message}
+          </div>
+        )}
+
+        {order.map((key) => {
+          const list = groups[key];
+          if (!list.length) return null;
+          return (
+            <div key={key} style={{ marginBottom: 22 }}>
+              <div
+                style={{
+                  fontSize: 12,
+                  fontWeight: 800,
+                  letterSpacing: "0.04em",
+                  textTransform: "uppercase",
+                  color: key === "atrasados" ? "var(--danger)" : "var(--ink-muted)",
+                  marginBottom: 8,
+                }}
+              >
+                {GROUP_LABELS[key]} · {list.length}
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {list.map((t) => (
+                  <TaskCard key={t.id} task={t} />
+                ))}
+              </div>
+            </div>
+          );
+        })}
+
+        {!tasks.length && !tasksError && (
+          <p style={{ color: "var(--ink-muted)", fontSize: 13.5 }}>
+            No hay pendientes todavía — crea el primero con el botón de arriba.
+          </p>
+        )}
       </div>
     </div>
   );

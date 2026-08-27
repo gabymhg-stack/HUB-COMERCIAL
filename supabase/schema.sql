@@ -111,21 +111,35 @@ create policy "type_labels_escritura" on public.type_labels for all using (
 create policy "projects_lectura" on public.projects for select using (auth.uid() is not null);
 create policy "projects_escritura" on public.projects for all using (auth.uid() is not null);
 
-create policy "tasks_lectura" on public.tasks for select using (
-  exists (select 1 from public.profiles p where p.id = auth.uid() and p.sees_all)
-  or exists (select 1 from public.task_owners o where o.task_id = tasks.id and o.person_id = auth.uid())
-  or exists (
+-- Función auxiliar (security definer) para evitar recursión infinita:
+-- una política de "tasks" NO puede consultar "tasks" directamente sin
+-- volver a disparar la misma política. Al ser security definer, esta
+-- función corre con permisos de su dueño (exento de RLS) y rompe el ciclo.
+create or replace function public.is_project_participant(_project_id uuid, _user_id uuid)
+returns boolean
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select exists (
     select 1 from public.projects pr
-    where pr.id = tasks.project_id
+    where pr.id = _project_id
       and (
-        pr.owner_id = auth.uid()
+        pr.owner_id = _user_id
         or exists (
           select 1 from public.tasks t2
           join public.task_owners o2 on o2.task_id = t2.id
-          where t2.project_id = pr.id and o2.person_id = auth.uid()
+          where t2.project_id = pr.id and o2.person_id = _user_id
         )
       )
-  )
+  );
+$$;
+
+create policy "tasks_lectura" on public.tasks for select using (
+  exists (select 1 from public.profiles p where p.id = auth.uid() and p.sees_all)
+  or exists (select 1 from public.task_owners o where o.task_id = tasks.id and o.person_id = auth.uid())
+  or public.is_project_participant(tasks.project_id, auth.uid())
 );
 create policy "tasks_inserta" on public.tasks for insert with check (auth.uid() is not null);
 create policy "tasks_actualiza" on public.tasks for update using (
