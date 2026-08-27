@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "./actions";
-import { groupTasks, computeKPIs } from "@/lib/data";
+import { computeKPIs } from "@/lib/data";
 import PendientesList from "@/components/PendientesList";
 import NewTaskForm from "@/components/NewTaskForm";
 import Topbar from "@/components/Topbar";
@@ -43,9 +43,7 @@ export default async function Home() {
   }
 
   const tasks = tasksRaw || [];
-  const groups = groupTasks(tasks);
   const kpis = computeKPIs(tasks);
-  const order = ["atrasados", "hoy", "semana", "adelante", "completados"];
   const kpiCards = [
     { label: "Activos", value: kpis.activos, color: "var(--ink)" },
     { label: "Atrasados", value: kpis.atrasados, color: "var(--danger)" },
@@ -102,8 +100,7 @@ export default async function Home() {
         )}
 
         <PendientesList
-          groups={groups}
-          order={order}
+          tasks={tasks}
           areas={areas || []}
           types={types || []}
           devs={devs || []}
