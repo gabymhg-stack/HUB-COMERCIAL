@@ -43,6 +43,7 @@ export default function Topbar({ profile, active }) {
 
         <nav style={{ display: "flex", gap: 4 }}>
           <NavLink href="/" label="Pendientes" activeKey="pendientes" active={active} />
+          <NavLink href="/proyectos" label="Proyectos" activeKey="proyectos" active={active} />
           {profile?.sees_all && <NavLink href="/ajustes" label="Ajustes" activeKey="ajustes" active={active} />}
         </nav>
       </div>

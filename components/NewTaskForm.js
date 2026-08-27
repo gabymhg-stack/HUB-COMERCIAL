@@ -4,9 +4,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
-export default function NewTaskForm({ areas, types, devs, projects, people, currentUserId }) {
+export default function NewTaskForm({ areas, types, devs, projects, people, currentUserId, defaultProjectId, defaultOpen }) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(!!defaultOpen);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [form, setForm] = useState({
@@ -14,7 +14,7 @@ export default function NewTaskForm({ areas, types, devs, projects, people, curr
     area_id: areas[0]?.id || "",
     type_id: types[0]?.id || "",
     dev_id: "",
-    project_id: "",
+    project_id: defaultProjectId || "",
     priority: "media",
     due_date: "",
     blocked_by_enrique: false,
@@ -71,13 +71,13 @@ export default function NewTaskForm({ areas, types, devs, projects, people, curr
     }
 
     setSaving(false);
-    setOpen(false);
+    setOpen(!!defaultOpen);
     setForm({
       title: "",
       area_id: areas[0]?.id || "",
       type_id: types[0]?.id || "",
       dev_id: "",
-      project_id: "",
+      project_id: defaultProjectId || "",
       priority: "media",
       due_date: "",
       blocked_by_enrique: false,
