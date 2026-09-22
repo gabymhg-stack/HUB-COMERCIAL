@@ -43,10 +43,10 @@ export default function Topbar({ profile, active }) {
         </div>
 
         <nav style={{ display: "flex", gap: 4 }}>
+          {profile?.sees_all && <NavLink href="/braindump" label="🧠 Braindump" activeKey="braindump" active={active} />}
           <NavLink href="/" label="Pendientes" activeKey="pendientes" active={active} />
           <NavLink href="/proyectos" label="Proyectos" activeKey="proyectos" active={active} />
           {profile?.sees_all && <NavLink href="/reportes" label="Reportes" activeKey="reportes" active={active} />}
-          {profile?.sees_all && <NavLink href="/braindump" label="🧠 Braindump" activeKey="braindump" active={active} />}
           {profile?.sees_all && <NavLink href="/ajustes" label="Ajustes" activeKey="ajustes" active={active} />}
         </nav>
       </div>

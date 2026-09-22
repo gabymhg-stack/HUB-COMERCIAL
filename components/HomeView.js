@@ -42,12 +42,11 @@ export default function HomeView({ profile, areas, types, devs, projects, people
         flexWrap: "wrap",
       }}
     >
-      {profile?.sees_all && people?.length > 0 && (
-        <PersonSwitcher people={people} active={personFilter} onChange={setPersonFilter} />
-      )}
-
-      <div style={{ flex: "1 1 480px", minWidth: 320 }}>
-        {people?.length > 0 && (
+      {people?.length > 0 && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 20, flex: "0 0 260px", minWidth: 220 }}>
+          {profile?.sees_all && (
+            <PersonSwitcher people={people} active={personFilter} onChange={setPersonFilter} />
+          )}
           <BraindumpWidget
             items={braindumpItems || []}
             people={people}
@@ -55,8 +54,10 @@ export default function HomeView({ profile, areas, types, devs, projects, people
             types={types || []}
             currentUserId={currentUserId}
           />
-        )}
+        </div>
+      )}
 
+      <div style={{ flex: "1 1 480px", minWidth: 320 }}>
         <div
           style={{
             display: "grid",
