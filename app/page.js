@@ -11,20 +11,36 @@ export default async function Home() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [{ data: profile }, { data: areas }, { data: types }, { data: devs }, { data: projects }, { data: people }, { data: tasksRaw, error: tasksError }] =
-    await Promise.all([
-      supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(),
-      supabase.from("areas").select("*").order("name"),
-      supabase.from("type_labels").select("*").order("name"),
-      supabase.from("dev_tags").select("*").order("name"),
-      supabase.from("projects").select("*").order("name"),
-      supabase.from("profiles").select("*").order("name"),
-      supabase
-        .from("tasks")
-        .select(
-          "*, area:areas(id,name,color), dev:dev_tags(id,name,color), type:type_labels(id,name), project:projects(id,name), owners:task_owners(person:profiles(id,name,color))"
-        ),
-    ]);
+  const [
+    { data: profile },
+    { data: areas },
+    { data: types },
+    { data: devs },
+    { data: projects },
+    { data: people },
+    { data: tasksRaw, error: tasksError },
+    { data: braindumpRaw },
+  ] = await Promise.all([
+    supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(),
+    supabase.from("areas").select("*").order("name"),
+    supabase.from("type_labels").select("*").order("name"),
+    supabase.from("dev_tags").select("*").order("name"),
+    supabase.from("projects").select("*").order("name"),
+    supabase.from("profiles").select("*").order("name"),
+    supabase
+      .from("tasks")
+      .select(
+        "*, area:areas(id,name,color), dev:dev_tags(id,name,color), type:type_labels(id,name), project:projects(id,name), owners:task_owners(person:profiles(id,name,color))"
+      ),
+    // Solo lo que me toca a mí: lo que me asignaron + lo que yo pedí —
+    // así el widget del Braindump no necesita traer la tabla completa.
+    supabase
+      .from("braindump_items")
+      .select(
+        "*, asignado:profiles!braindump_items_asignado_a_fkey(id,name,color), creador:profiles!braindump_items_creado_por_fkey(id,name,color), bloqueador:profiles!braindump_items_bloqueado_por_fkey(id,name,color)"
+      )
+      .or(`asignado_a.eq.${user.id},creado_por.eq.${user.id}`),
+  ]);
 
   if (!profile) {
     return (
@@ -52,6 +68,7 @@ export default async function Home() {
         people={people || []}
         tasks={tasksRaw || []}
         tasksError={tasksError?.message}
+        braindumpItems={braindumpRaw || []}
         currentUserId={user.id}
       />
     </div>

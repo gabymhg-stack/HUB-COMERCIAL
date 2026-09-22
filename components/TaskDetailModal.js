@@ -104,6 +104,19 @@ export default function TaskDetailModal({
       return;
     }
 
+    // Misma sincronización que el check rápido de la tarjeta: si esta
+    // tarea viene de un item del Braindump, su estado se refleja ahí.
+    if (task.braindump_item_id && nowCompleted !== wasCompleted) {
+      await supabase
+        .from("braindump_items")
+        .update(
+          nowCompleted
+            ? { estado: "completado", completado_at }
+            : { estado: "aceptado", completado_at: null }
+        )
+        .eq("id", task.braindump_item_id);
+    }
+
     const { error: deleteOwnersError } = await supabase.from("task_owners").delete().eq("task_id", task.id);
     if (deleteOwnersError) {
       setSaving(false);

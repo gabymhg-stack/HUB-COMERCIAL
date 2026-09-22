@@ -24,11 +24,24 @@ export default function TaskCard({ task, onOpen }) {
       ? { status: "pendiente", completed_at: null }
       : { status: "completado", completed_at: new Date().toISOString() };
     const { error } = await supabase.from("tasks").update(patch).eq("id", task.id);
-    setBusy(false);
     if (error) {
+      setBusy(false);
       alert("No se pudo guardar: " + error.message);
       return;
     }
+    // Si esta tarea vino de un item del Braindump, se refleja el mismo
+    // cambio ahí — son dos vistas del mismo pendiente, no dos registros.
+    if (task.braindump_item_id) {
+      await supabase
+        .from("braindump_items")
+        .update(
+          done
+            ? { estado: "aceptado", completado_at: null }
+            : { estado: "completado", completado_at: new Date().toISOString() }
+        )
+        .eq("id", task.braindump_item_id);
+    }
+    setBusy(false);
     startTransition(() => router.refresh());
   }
 

@@ -64,3 +64,20 @@ select {
 button {
   cursor: pointer;
 }
+
+/* ---- Braindump: acciones que solo se ven al pasar el mouse sobre el
+   item (editar/tag/fecha/eliminar), y el estilo de "se está arrastrando"
+   del drag & drop nativo entre columnas. ---- */
+.braindump-item-actions {
+  opacity: 0;
+  transition: opacity 0.1s ease;
+}
+.braindump-item:hover .braindump-item-actions {
+  opacity: 1;
+}
+.braindump-item.dragging {
+  opacity: 0.4;
+}
+.braindump-column.drag-over {
+  background: var(--surface-2);
+}
