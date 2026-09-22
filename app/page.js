@@ -20,6 +20,7 @@ export default async function Home() {
     { data: people },
     { data: tasksRaw, error: tasksError },
     { data: braindumpRaw },
+    { data: priorityRaw },
   ] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(),
     supabase.from("areas").select("*").order("name"),
@@ -40,6 +41,13 @@ export default async function Home() {
         "*, asignado:profiles!braindump_items_asignado_a_fkey(id,name,color), creador:profiles!braindump_items_creado_por_fkey(id,name,color), bloqueador:profiles!braindump_items_bloqueado_por_fkey(id,name,color)"
       )
       .or(`asignado_a.eq.${user.id},creado_por.eq.${user.id}`),
+    // Prioridad de la semana asignada por Enrique/Gaby — una fila por
+    // persona, se sobreescribe cada semana (ver weekly_priorities).
+    supabase
+      .from("weekly_priorities")
+      .select("*, setBy:profiles!weekly_priorities_set_by_fkey(id,name)")
+      .eq("person_id", user.id)
+      .maybeSingle(),
   ]);
 
   if (!profile) {
@@ -69,6 +77,7 @@ export default async function Home() {
         tasks={tasksRaw || []}
         tasksError={tasksError?.message}
         braindumpItems={braindumpRaw || []}
+        priority={priorityRaw}
         currentUserId={user.id}
       />
     </div>

@@ -7,6 +7,7 @@ import NewTaskForm from "./NewTaskForm";
 import PendientesList from "./PendientesList";
 import Sidebar from "./widgets/Sidebar";
 import BraindumpWidget from "./braindump/BraindumpWidget";
+import PriorityBanner from "./PriorityBanner";
 
 // Dueño del layout de 3 columnas de la pantalla de Pendientes: riel de
 // personas (izquierda, solo Enrique/Gaby) · contenido central (widget de
@@ -14,7 +15,7 @@ import BraindumpWidget from "./braindump/BraindumpWidget";
 // switcher de persona vive aquí (no dentro de PendientesList) para que
 // quede separado como bloque propio, no pegado al botón de "+ Nuevo
 // pendiente".
-export default function HomeView({ profile, areas, types, devs, projects, people, tasks, tasksError, braindumpItems, currentUserId }) {
+export default function HomeView({ profile, areas, types, devs, projects, people, tasks, tasksError, braindumpItems, priority, currentUserId }) {
   const [personFilter, setPersonFilter] = useState(null); // null = "Todo el equipo"
 
   const visibleTasks = useMemo(() => {
@@ -58,6 +59,8 @@ export default function HomeView({ profile, areas, types, devs, projects, people
       )}
 
       <div style={{ flex: "1 1 480px", minWidth: 320 }}>
+        <PriorityBanner priority={priority} />
+
         <div
           style={{
             display: "grid",

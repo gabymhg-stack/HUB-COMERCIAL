@@ -6,7 +6,7 @@ import BraindumpColumn from "./BraindumpColumn";
 // Vista de admins: 5 columnas (una por persona) con scroll horizontal.
 // Solo llega gente con profile.sees_all (el gate real está en
 // app/braindump/page.js, aquí ya se asume que sí puede verlo).
-export default function BraindumpBoard({ items, people, adminIds }) {
+export default function BraindumpBoard({ items, people, adminIds, priorities, currentUserId }) {
   const visible = visibleInBoard(items, new Set(adminIds));
   const orderedPeople = sortTeamOrder(people);
   const grouped = groupByPerson(visible, orderedPeople);
@@ -22,7 +22,16 @@ export default function BraindumpBoard({ items, people, adminIds }) {
     >
       {orderedPeople.map((p) => {
         const bucket = grouped[p.id] || { activos: [], hechos: [] };
-        return <BraindumpColumn key={p.id} person={p} activos={bucket.activos} hechos={bucket.hechos} />;
+        return (
+          <BraindumpColumn
+            key={p.id}
+            person={p}
+            activos={bucket.activos}
+            hechos={bucket.hechos}
+            currentUserId={currentUserId}
+            priority={priorities?.[p.id]}
+          />
+        );
       })}
     </div>
   );

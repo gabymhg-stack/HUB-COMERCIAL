@@ -92,6 +92,11 @@ alter table public.comments enable row level security;
 
 create policy "profiles_lectura" on public.profiles for select using (auth.uid() is not null);
 create policy "profiles_actualiza_propio" on public.profiles for update using (id = auth.uid());
+-- Enrique y Gaby (sees_all) también pueden editar el perfil de cualquier
+-- persona del equipo, desde el panel de Ajustes → Equipo.
+create policy "profiles_actualiza_admin" on public.profiles for update using (
+  exists (select 1 from public.profiles p where p.id = auth.uid() and p.sees_all)
+);
 
 create policy "areas_lectura" on public.areas for select using (auth.uid() is not null);
 create policy "areas_escritura" on public.areas for all using (
@@ -138,6 +143,7 @@ $$;
 
 create policy "tasks_lectura" on public.tasks for select using (
   exists (select 1 from public.profiles p where p.id = auth.uid() and p.sees_all)
+  or created_by = auth.uid()
   or exists (select 1 from public.task_owners o where o.task_id = tasks.id and o.person_id = auth.uid())
   or public.is_project_participant(tasks.project_id, auth.uid())
 );
@@ -178,6 +184,81 @@ insert into public.dev_tags (name, color) values
 
 insert into public.type_labels (name) values
   ('Entregable'), ('Junta'), ('Decisión'), ('Rutinario'), ('Pendiente personal');
+
+-- ============================================================
+-- MÓDULO BRAINDUMP (agregado 22-sep-2026 — ver migration_braindump.sql
+-- para el detalle comentado; en una base ya existente corre ESE archivo
+-- por separado en vez de repetir todo este schema.sql).
+-- ============================================================
+create table public.braindump_items (
+  id                uuid primary key default gen_random_uuid(),
+  texto             text not null,
+  asignado_a        uuid not null references public.profiles(id) on delete cascade,
+  creado_por        uuid not null references public.profiles(id),
+  origen            text not null default 'braindump' check (origen in ('braindump', 'solicitud')),
+  tag               text default '',
+  fecha_limite      date,
+  orden             bigint not null default 0,
+  estado            text not null default 'sin_aceptar'
+                      check (estado in ('sin_aceptar', 'aceptado', 'bloqueado', 'completado', 'rechazado')),
+  fecha_compromiso  date,
+  aceptado_at       timestamptz,
+  completado_at     timestamptz,
+  bloqueado_por     uuid references public.profiles(id) on delete set null,
+  comentario_cierre text default '',
+  created_at        timestamptz not null default now()
+);
+
+alter table public.tasks
+  add column braindump_item_id uuid references public.braindump_items(id) on delete set null;
+
+alter table public.braindump_items enable row level security;
+
+create policy "braindump_lectura" on public.braindump_items for select using (auth.uid() is not null);
+create policy "braindump_inserta" on public.braindump_items for insert with check (
+  creado_por = auth.uid()
+  and (
+    origen = 'solicitud'
+    or exists (select 1 from public.profiles p where p.id = auth.uid() and p.sees_all)
+  )
+);
+create policy "braindump_actualiza" on public.braindump_items for update using (
+  exists (select 1 from public.profiles p where p.id = auth.uid() and p.sees_all)
+  or asignado_a = auth.uid()
+  or creado_por = auth.uid()
+);
+create policy "braindump_borra" on public.braindump_items for delete using (
+  exists (select 1 from public.profiles p where p.id = auth.uid() and p.sees_all)
+  or creado_por = auth.uid()
+);
+
+create index braindump_items_asignado_a_idx on public.braindump_items(asignado_a);
+create index braindump_items_creado_por_idx on public.braindump_items(creado_por);
+
+-- ---------- PRIORIDAD / OBJETIVO DE LA SEMANA ----------
+create table public.weekly_priorities (
+  id          uuid primary key default gen_random_uuid(),
+  person_id   uuid not null unique references public.profiles(id) on delete cascade,
+  texto       text not null default '',
+  set_by      uuid references public.profiles(id) on delete set null,
+  updated_at  timestamptz not null default now()
+);
+
+alter table public.weekly_priorities enable row level security;
+
+create policy "weekly_priorities_lectura" on public.weekly_priorities for select using (
+  person_id = auth.uid()
+  or exists (select 1 from public.profiles p where p.id = auth.uid() and p.sees_all)
+);
+create policy "weekly_priorities_inserta" on public.weekly_priorities for insert with check (
+  exists (select 1 from public.profiles p where p.id = auth.uid() and p.sees_all)
+);
+create policy "weekly_priorities_actualiza" on public.weekly_priorities for update using (
+  exists (select 1 from public.profiles p where p.id = auth.uid() and p.sees_all)
+);
+create policy "weekly_priorities_borra" on public.weekly_priorities for delete using (
+  exists (select 1 from public.profiles p where p.id = auth.uid() and p.sees_all)
+);
 
 -- ============================================================
 -- SIGUIENTE PASO (hazlo tú, después de correr todo lo de arriba):

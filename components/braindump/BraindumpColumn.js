@@ -5,12 +5,13 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import BraindumpItemCard from "./BraindumpItemCard";
 import NewBraindumpItemForm from "./NewBraindumpItemForm";
+import PriorityEditor from "./PriorityEditor";
 
 // Una columna del Board (una persona). El drag & drop es nativo del
 // navegador (draggable + dragover + drop) y solo reordena DENTRO de la
 // misma columna, tal cual pide el brief — si el drag vino de otra
 // columna simplemente no se encuentra en la lista local y se ignora.
-export default function BraindumpColumn({ person, activos, hechos }) {
+export default function BraindumpColumn({ person, activos, hechos, currentUserId, priority }) {
   const router = useRouter();
   const [dragId, setDragId] = useState(null);
   const [overId, setOverId] = useState(null);
@@ -83,7 +84,16 @@ export default function BraindumpColumn({ person, activos, hechos }) {
         <span style={{ fontWeight: 600, fontSize: 12, opacity: 0.85 }}> · {activos.length}</span>
       </div>
 
+      <PriorityEditor
+        personId={person.id}
+        currentUserId={currentUserId}
+        initialText={priority?.texto}
+        updatedAt={priority?.updated_at}
+      />
+
       <div style={{ padding: 10, overflowY: "auto", flex: 1, display: "flex", flexDirection: "column", gap: 8 }}>
+        <NewBraindumpItemForm personId={person.id} />
+
         {activos.map((item) => (
           <div key={item.id} onDragOver={(e) => handleDragOverItem(e, item)}>
             <BraindumpItemCard item={item} draggable onDragStart={handleDragStart} onDragEnd={handleDragEnd} />
@@ -94,8 +104,6 @@ export default function BraindumpColumn({ person, activos, hechos }) {
             Nada pendiente.
           </p>
         )}
-
-        <NewBraindumpItemForm personId={person.id} />
 
         {hechos.length > 0 && (
           <>

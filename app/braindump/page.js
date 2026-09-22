@@ -25,7 +25,7 @@ export default async function BraindumpPage() {
     );
   }
 
-  const [{ data: people }, { data: itemsRaw }] = await Promise.all([
+  const [{ data: people }, { data: itemsRaw }, { data: prioritiesRaw }] = await Promise.all([
     supabase.from("profiles").select("*").order("name"),
     supabase
       .from("braindump_items")
@@ -33,9 +33,11 @@ export default async function BraindumpPage() {
         "*, bloqueador:profiles!braindump_items_bloqueado_por_fkey(id,name,color), creador:profiles!braindump_items_creado_por_fkey(id,name,color)"
       )
       .order("orden", { ascending: true }),
+    supabase.from("weekly_priorities").select("*"),
   ]);
 
   const adminIds = (people || []).filter((p) => p.sees_all).map((p) => p.id);
+  const priorities = Object.fromEntries((prioritiesRaw || []).map((p) => [p.person_id, p]));
 
   return (
     <div style={{ minHeight: "100vh" }}>
@@ -46,7 +48,13 @@ export default async function BraindumpPage() {
           Vaciado rápido de pendientes por persona — no es el HUB formal, es para asignar sin fricción. Cada quien
           acepta lo suyo con fecha compromiso desde su propio dashboard, y ahí sí se vuelve una tarea normal.
         </p>
-        <BraindumpBoard items={itemsRaw || []} people={people || []} adminIds={adminIds} />
+        <BraindumpBoard
+          items={itemsRaw || []}
+          people={people || []}
+          adminIds={adminIds}
+          priorities={priorities}
+          currentUserId={user.id}
+        />
       </div>
     </div>
   );
