@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import Topbar from "@/components/Topbar";
 import BraindumpBoard from "@/components/braindump/BraindumpBoard";
+import StatusPulseWidget from "@/components/widgets/StatusPulseWidget";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +26,7 @@ export default async function BraindumpPage() {
     );
   }
 
-  const [{ data: people }, { data: itemsRaw }, { data: prioritiesRaw }] = await Promise.all([
+  const [{ data: people }, { data: itemsRaw }, { data: prioritiesRaw }, { data: statusesRaw }] = await Promise.all([
     supabase.from("profiles").select("*").order("name"),
     supabase
       .from("braindump_items")
@@ -34,6 +35,7 @@ export default async function BraindumpPage() {
       )
       .order("orden", { ascending: true }),
     supabase.from("weekly_priorities").select("*"),
+    supabase.from("status_updates").select("*"),
   ]);
 
   const adminIds = (people || []).filter((p) => p.sees_all).map((p) => p.id);
@@ -42,19 +44,26 @@ export default async function BraindumpPage() {
   return (
     <div style={{ minHeight: "100vh" }}>
       <Topbar profile={profile} active="braindump" />
-      <div style={{ maxWidth: 1400, margin: "0 auto", padding: "24px 20px 60px" }}>
+      <div style={{ maxWidth: 1700, margin: "0 auto", padding: "24px 20px 60px" }}>
         <h1 style={{ fontSize: 18, fontWeight: 800, marginBottom: 4 }}>🧠 Braindump</h1>
         <p style={{ fontSize: 12.5, color: "var(--ink-muted)", marginBottom: 18 }}>
           Vaciado rápido de pendientes por persona — no es el HUB formal, es para asignar sin fricción. Cada quien
           acepta lo suyo con fecha compromiso desde su propio dashboard, y ahí sí se vuelve una tarea normal.
         </p>
-        <BraindumpBoard
-          items={itemsRaw || []}
-          people={people || []}
-          adminIds={adminIds}
-          priorities={priorities}
-          currentUserId={user.id}
-        />
+        <div style={{ display: "flex", gap: 20, alignItems: "flex-start", flexWrap: "wrap" }}>
+          <div style={{ flex: "1 1 700px", minWidth: 0 }}>
+            <BraindumpBoard
+              items={itemsRaw || []}
+              people={people || []}
+              adminIds={adminIds}
+              priorities={priorities}
+              currentUserId={user.id}
+            />
+          </div>
+          <div style={{ flex: "0 0 260px", minWidth: 220 }}>
+            <StatusPulseWidget people={people || []} statuses={statusesRaw || []} currentUserId={user.id} />
+          </div>
+        </div>
       </div>
     </div>
   );
