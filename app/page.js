@@ -21,6 +21,7 @@ export default async function Home() {
     { data: tasksRaw, error: tasksError },
     { data: braindumpRaw },
     { data: priorityRaw },
+    { data: statusesRaw },
   ] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(),
     supabase.from("areas").select("*").order("name"),
@@ -48,6 +49,9 @@ export default async function Home() {
       .select("*, setBy:profiles!weekly_priorities_set_by_fkey(id,name)")
       .eq("person_id", user.id)
       .maybeSingle(),
+    // "En qué andamos" — de todo el equipo, la ve cualquiera (no solo
+    // admins), cada quien solo puede editar la suya.
+    supabase.from("status_updates").select("*"),
   ]);
 
   if (!profile) {
@@ -78,6 +82,7 @@ export default async function Home() {
         tasksError={tasksError?.message}
         braindumpItems={braindumpRaw || []}
         priority={priorityRaw}
+        statuses={statusesRaw || []}
         currentUserId={user.id}
       />
     </div>

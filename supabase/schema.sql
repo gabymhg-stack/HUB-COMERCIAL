@@ -260,6 +260,21 @@ create policy "weekly_priorities_borra" on public.weekly_priorities for delete u
   exists (select 1 from public.profiles p where p.id = auth.uid() and p.sees_all)
 );
 
+-- ---------- "EN QUÉ ANDAMOS" (status del equipo) ----------
+create table public.status_updates (
+  id          uuid primary key default gen_random_uuid(),
+  person_id   uuid not null unique references public.profiles(id) on delete cascade,
+  texto       text not null default '',
+  updated_at  timestamptz not null default now()
+);
+
+alter table public.status_updates enable row level security;
+
+create policy "status_updates_lectura" on public.status_updates for select using (auth.uid() is not null);
+create policy "status_updates_inserta" on public.status_updates for insert with check (person_id = auth.uid());
+create policy "status_updates_actualiza" on public.status_updates for update using (person_id = auth.uid());
+create policy "status_updates_borra" on public.status_updates for delete using (person_id = auth.uid());
+
 -- ============================================================
 -- SIGUIENTE PASO (hazlo tú, después de correr todo lo de arriba):
 -- 1. Ve a Authentication → Users → Add user, crea a cada persona del

@@ -52,6 +52,14 @@ export default function BraindumpColumn({ person, activos, hechos, currentUserId
     router.refresh();
   }
 
+  // "Aceptado" (incluye bloqueado, ya que la persona lo tomó como suyo
+  // y solo está pausado) sube arriba de "Sin aceptar" — así Enrique ve
+  // de un vistazo qué es lo que cada quien ya sabe que tiene en su
+  // cancha vs. lo que todavía no ha tocado. El orden dentro de cada
+  // grupo sigue siendo el de "orden" (drag & drop), no se toca.
+  const comprometidos = activos.filter((it) => it.estado === "aceptado" || it.estado === "bloqueado");
+  const sinAceptar = activos.filter((it) => it.estado === "sin_aceptar");
+
   return (
     <div
       className="braindump-column"
@@ -94,11 +102,28 @@ export default function BraindumpColumn({ person, activos, hechos, currentUserId
       <div style={{ padding: 10, overflowY: "auto", flex: 1, display: "flex", flexDirection: "column", gap: 8 }}>
         <NewBraindumpItemForm personId={person.id} />
 
-        {activos.map((item) => (
-          <div key={item.id} onDragOver={(e) => handleDragOverItem(e, item)}>
-            <BraindumpItemCard item={item} draggable onDragStart={handleDragStart} onDragEnd={handleDragEnd} />
-          </div>
-        ))}
+        {comprometidos.length > 0 && (
+          <>
+            <div style={groupLabel}>✓ Aceptado · {comprometidos.length}</div>
+            {comprometidos.map((item) => (
+              <div key={item.id} onDragOver={(e) => handleDragOverItem(e, item)}>
+                <BraindumpItemCard item={item} draggable onDragStart={handleDragStart} onDragEnd={handleDragEnd} />
+              </div>
+            ))}
+          </>
+        )}
+
+        {sinAceptar.length > 0 && (
+          <>
+            <div style={groupLabel}>Sin aceptar · {sinAceptar.length}</div>
+            {sinAceptar.map((item) => (
+              <div key={item.id} onDragOver={(e) => handleDragOverItem(e, item)}>
+                <BraindumpItemCard item={item} draggable onDragStart={handleDragStart} onDragEnd={handleDragEnd} />
+              </div>
+            ))}
+          </>
+        )}
+
         {activos.length === 0 && (
           <p style={{ fontSize: 12, color: "var(--ink-muted)", textAlign: "center", padding: "6px 0" }}>
             Nada pendiente.
@@ -107,20 +132,7 @@ export default function BraindumpColumn({ person, activos, hechos, currentUserId
 
         {hechos.length > 0 && (
           <>
-            <div
-              style={{
-                borderTop: "1px solid var(--border)",
-                marginTop: 6,
-                paddingTop: 8,
-                fontSize: 11,
-                fontWeight: 800,
-                letterSpacing: "0.04em",
-                textTransform: "uppercase",
-                color: "var(--ink-muted)",
-              }}
-            >
-              Hecho · {hechos.length}
-            </div>
+            <div style={groupLabel}>Hecho · {hechos.length}</div>
             {hechos.map((item) => (
               <BraindumpItemCard key={item.id} item={item} draggable={false} />
             ))}
@@ -130,3 +142,14 @@ export default function BraindumpColumn({ person, activos, hechos, currentUserId
     </div>
   );
 }
+
+const groupLabel = {
+  borderTop: "1px solid var(--border)",
+  marginTop: 6,
+  paddingTop: 8,
+  fontSize: 11,
+  fontWeight: 800,
+  letterSpacing: "0.04em",
+  textTransform: "uppercase",
+  color: "var(--ink-muted)",
+};
