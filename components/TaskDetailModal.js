@@ -283,7 +283,7 @@ export default function TaskDetailModal({
               checked={form.blocked_by_enrique}
               onChange={(e) => setForm((f) => ({ ...f, blocked_by_enrique: e.target.checked }))}
             />
-            Parado por Enrique
+            Bloqueado por Enrique
           </label>
         </div>
 

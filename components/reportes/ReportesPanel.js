@@ -8,7 +8,7 @@ export default function ReportesPanel({ tasks, people, areas }) {
   const kpiCards = [
     { label: "Activos", value: kpis.activos, color: "var(--ink)" },
     { label: "Atrasados", value: kpis.atrasados, color: "var(--danger)" },
-    { label: "Parados por Enrique", value: kpis.parados, color: "#b5651d" },
+    { label: "Bloqueados por Enrique", value: kpis.parados, color: "#b5651d" },
     { label: "Completados esta semana", value: kpis.completadosSemana, color: "var(--good)" },
   ];
 

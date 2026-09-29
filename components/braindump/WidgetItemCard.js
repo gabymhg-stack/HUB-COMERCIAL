@@ -91,7 +91,7 @@ export default function WidgetItemCard({ item, mode, areas, types, people, curre
         {mode === "assigned" && item.estado === "bloqueado" && (
           <>
             <span style={{ fontSize: 10.5, fontWeight: 800, color: "#b5651d" }}>
-              ⏸ Parado por {item.bloqueador?.name || "—"}
+              ⏸ Bloqueado por {item.bloqueador?.name || "—"}
             </span>
             <BlockControl item={item} people={people} currentUserId={currentUserId} />
           </>
@@ -114,7 +114,7 @@ export default function WidgetItemCard({ item, mode, areas, types, people, curre
               }}
             >
               {item.estado === "bloqueado"
-                ? `⏸ Parado por ${item.bloqueador?.name || "—"}`
+                ? `⏸ Bloqueado por ${item.bloqueador?.name || "—"}`
                 : item.estado === "rechazado"
                 ? "✕ Rechazada"
                 : item.estado === "aceptado"

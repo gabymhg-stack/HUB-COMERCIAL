@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import TaskCard from "./TaskCard";
 import TaskDetailModal from "./TaskDetailModal";
 import FiltersBar from "./FiltersBar";
+import ArchivoSection from "./ArchivoSection";
 import { groupTasks, GROUP_LABELS } from "@/lib/data";
 
 const PRIORITY_ORDER = { alta: 0, media: 1, baja: 2 };
@@ -75,6 +76,11 @@ export default function PendientesList({
         order.map((key) => {
           const list = groups[key];
           if (!list.length) return null;
+          // Completados va en su propia "carpeta" colapsada, no como
+          // sección normal — es lo que abrumaba el plano principal.
+          if (key === "completados") {
+            return <ArchivoSection key={key} tasks={list} onOpen={setOpenTask} />;
+          }
           return (
             <div key={key} style={{ marginBottom: 22 }}>
               <div
@@ -99,14 +105,17 @@ export default function PendientesList({
         })}
 
       {flatList && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 22 }}>
-          {flatList.map((t) => (
-            <TaskCard key={t.id} task={t} onOpen={() => setOpenTask(t)} />
-          ))}
-          {flatList.length === 0 && (
-            <p style={{ color: "var(--ink-muted)", fontSize: 13.5 }}>Nada coincide con esos filtros.</p>
-          )}
-        </div>
+        <>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 22 }}>
+            {flatList.filter((t) => t.status !== "completado").map((t) => (
+              <TaskCard key={t.id} task={t} onOpen={() => setOpenTask(t)} />
+            ))}
+            {flatList.length === 0 && (
+              <p style={{ color: "var(--ink-muted)", fontSize: 13.5 }}>Nada coincide con esos filtros.</p>
+            )}
+          </div>
+          <ArchivoSection tasks={flatList.filter((t) => t.status === "completado")} onOpen={setOpenTask} />
+        </>
       )}
 
       {openTask && (

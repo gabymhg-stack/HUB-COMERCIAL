@@ -36,7 +36,7 @@ export default function AcceptModal({ item, areas, types, currentUserId, onClose
       return;
     }
 
-    const { area, type } = pickDefaultAreaAndType(areas, types);
+    const { area, type } = pickDefaultAreaAndType(areas, types, item.asignado);
     const { data: task, error: taskError } = await supabase
       .from("tasks")
       .insert({

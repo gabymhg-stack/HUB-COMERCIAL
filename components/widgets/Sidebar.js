@@ -2,7 +2,7 @@ import CalendarWidget from "./CalendarWidget";
 import ParadosWidget from "./ParadosWidget";
 import RutinariosWidget from "./RutinariosWidget";
 
-// Orden fijo por diseño: Calendario, Parados por Enrique (solo
+// Orden fijo por diseño: Calendario, Bloqueados por Enrique (solo
 // Enrique/Gaby), Rutinarios próximos.
 export default function Sidebar({ tasks, showParados }) {
   return (

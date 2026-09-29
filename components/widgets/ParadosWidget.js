@@ -6,10 +6,10 @@ export default function ParadosWidget({ tasks }) {
 
   return (
     <div style={widgetCard}>
-      <div style={widgetTitle}>Parados por Enrique · {list.length}</div>
+      <div style={widgetTitle}>Bloqueados por Enrique · {list.length}</div>
 
       {list.length === 0 && (
-        <p style={{ fontSize: 12.5, color: "var(--ink-muted)" }}>No hay nada parado ahora mismo.</p>
+        <p style={{ fontSize: 12.5, color: "var(--ink-muted)" }}>No hay nada bloqueado ahora mismo.</p>
       )}
 
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>

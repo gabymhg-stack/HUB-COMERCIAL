@@ -141,7 +141,7 @@ export default function TaskCard({ task, onOpen }) {
             {PRIORITY_LABEL[task.priority]}
           </span>
           {task.blocked_by_enrique && (
-            <span style={{ color: "#b5651d", fontWeight: 700 }}>Parado por Enrique</span>
+            <span style={{ color: "#b5651d", fontWeight: 700 }}>Bloqueado por Enrique</span>
           )}
           {task.project && <Badge>{task.project.name}</Badge>}
         </div>
