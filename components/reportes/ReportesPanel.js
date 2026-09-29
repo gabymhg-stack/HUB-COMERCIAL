@@ -1,9 +1,24 @@
-import { computeKPIs, reportPorPersona, reportPorArea, completadosPorSemana } from "@/lib/data";
+import {
+  computeKPIs,
+  reportPorPersona,
+  reportPorArea,
+  completadosPorSemana,
+  cicloPromedioPorPersona,
+  cumplimientoATiempo,
+  antiguedadPendientes,
+  reportPorProyecto,
+} from "@/lib/data";
+import { velocidadAceptacion } from "@/lib/braindump";
 import CargaPorPersona from "./CargaPorPersona";
 import CargaPorArea from "./CargaPorArea";
 import TendenciaSemanal from "./TendenciaSemanal";
+import TiempoCiclo from "./TiempoCiclo";
+import CumplimientoATiempo from "./CumplimientoATiempo";
+import AntiguedadPendientes from "./AntiguedadPendientes";
+import CargaPorProyecto from "./CargaPorProyecto";
+import VelocidadAceptacion from "./VelocidadAceptacion";
 
-export default function ReportesPanel({ tasks, people, areas }) {
+export default function ReportesPanel({ tasks, people, areas, projects, braindumpItems }) {
   const kpis = computeKPIs(tasks);
   const kpiCards = [
     { label: "Activos", value: kpis.activos, color: "var(--ink)" },
@@ -15,6 +30,11 @@ export default function ReportesPanel({ tasks, people, areas }) {
   const porPersona = reportPorPersona(tasks, people);
   const porArea = reportPorArea(tasks, areas);
   const tendencia = completadosPorSemana(tasks, 6);
+  const ciclo = cicloPromedioPorPersona(tasks, people);
+  const cumplimiento = cumplimientoATiempo(tasks);
+  const antiguedad = antiguedadPendientes(tasks);
+  const porProyecto = reportPorProyecto(tasks, projects || []);
+  const velocidad = velocidadAceptacion(braindumpItems || [], people);
 
   return (
     <div>
@@ -44,10 +64,22 @@ export default function ReportesPanel({ tasks, people, areas }) {
         ))}
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))",
+          gap: 16,
+          alignItems: "start",
+        }}
+      >
         <CargaPorPersona data={porPersona} />
         <CargaPorArea data={porArea} />
+        <CargaPorProyecto data={porProyecto} />
         <TendenciaSemanal data={tendencia} />
+        <TiempoCiclo data={ciclo} />
+        <CumplimientoATiempo data={cumplimiento} />
+        <AntiguedadPendientes data={antiguedad} />
+        <VelocidadAceptacion data={velocidad} />
       </div>
     </div>
   );
