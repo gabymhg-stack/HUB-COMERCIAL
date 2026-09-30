@@ -235,6 +235,75 @@ create policy "braindump_borra" on public.braindump_items for delete using (
 create index braindump_items_asignado_a_idx on public.braindump_items(asignado_a);
 create index braindump_items_creado_por_idx on public.braindump_items(creado_por);
 
+-- ---------- PRIORIDAD / OBJETIVO DE LA SEMANA ----------
+create table public.weekly_priorities (
+  id          uuid primary key default gen_random_uuid(),
+  person_id   uuid not null unique references public.profiles(id) on delete cascade,
+  texto       text not null default '',
+  set_by      uuid references public.profiles(id) on delete set null,
+  updated_at  timestamptz not null default now()
+);
+
+alter table public.weekly_priorities enable row level security;
+
+create policy "weekly_priorities_lectura" on public.weekly_priorities for select using (
+  person_id = auth.uid()
+  or exists (select 1 from public.profiles p where p.id = auth.uid() and p.sees_all)
+);
+create policy "weekly_priorities_inserta" on public.weekly_priorities for insert with check (
+  exists (select 1 from public.profiles p where p.id = auth.uid() and p.sees_all)
+);
+create policy "weekly_priorities_actualiza" on public.weekly_priorities for update using (
+  exists (select 1 from public.profiles p where p.id = auth.uid() and p.sees_all)
+);
+create policy "weekly_priorities_borra" on public.weekly_priorities for delete using (
+  exists (select 1 from public.profiles p where p.id = auth.uid() and p.sees_all)
+);
+
+-- ---------- "EN QUÉ ANDAMOS" (status del equipo) ----------
+create table public.status_updates (
+  id          uuid primary key default gen_random_uuid(),
+  person_id   uuid not null unique references public.profiles(id) on delete cascade,
+  texto       text not null default '',
+  updated_at  timestamptz not null default now()
+);
+
+alter table public.status_updates enable row level security;
+
+create policy "status_updates_lectura" on public.status_updates for select using (auth.uid() is not null);
+create policy "status_updates_inserta" on public.status_updates for insert with check (person_id = auth.uid());
+create policy "status_updates_actualiza" on public.status_updates for update using (person_id = auth.uid());
+create policy "status_updates_borra" on public.status_updates for delete using (person_id = auth.uid());
+
+-- ---------- NOTAS "REVISAR CON" (Javier/Jorge) ----------
+create table public.contact_notes (
+  id          uuid primary key default gen_random_uuid(),
+  contacto    text not null unique check (contacto in ('Javier', 'Jorge')),
+  texto       text not null default '',
+  set_by      uuid references public.profiles(id) on delete set null,
+  updated_at  timestamptz not null default now()
+);
+
+alter table public.contact_notes enable row level security;
+
+create policy "contact_notes_lectura" on public.contact_notes for select using (
+  exists (select 1 from public.profiles p where p.id = auth.uid() and p.sees_all)
+);
+create policy "contact_notes_inserta" on public.contact_notes for insert with check (
+  exists (select 1 from public.profiles p where p.id = auth.uid() and p.sees_all)
+);
+create policy "contact_notes_actualiza" on public.contact_notes for update using (
+  exists (select 1 from public.profiles p where p.id = auth.uid() and p.sees_all)
+);
+create policy "contact_notes_borra" on public.contact_notes for delete using (
+  exists (select 1 from public.profiles p where p.id = auth.uid() and p.sees_all)
+);
+
+insert into public.contact_notes (contacto) values ('Javier'), ('Jorge');
+
+-- ---------- TIPO "Evento" (el calendario lo resalta distinto) ----------
+insert into public.type_labels (name) values ('Evento') on conflict (name) do nothing;
+
 -- ============================================================
 -- SIGUIENTE PASO (hazlo tú, después de correr todo lo de arriba):
 -- 1. Ve a Authentication → Users → Add user, crea a cada persona del

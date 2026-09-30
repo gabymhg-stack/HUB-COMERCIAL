@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import Topbar from "@/components/Topbar";
 import BraindumpBoard from "@/components/braindump/BraindumpBoard";
 import StatusPulseWidget from "@/components/widgets/StatusPulseWidget";
+import ContactNotesWidget from "@/components/braindump/ContactNotesWidget";
 
 export const dynamic = "force-dynamic";
 
@@ -26,17 +27,19 @@ export default async function BraindumpPage() {
     );
   }
 
-  const [{ data: people }, { data: itemsRaw }, { data: prioritiesRaw }, { data: statusesRaw }] = await Promise.all([
-    supabase.from("profiles").select("*").order("name"),
-    supabase
-      .from("braindump_items")
-      .select(
-        "*, bloqueador:profiles!braindump_items_bloqueado_por_fkey(id,name,color), creador:profiles!braindump_items_creado_por_fkey(id,name,color)"
-      )
-      .order("orden", { ascending: true }),
-    supabase.from("weekly_priorities").select("*"),
-    supabase.from("status_updates").select("*"),
-  ]);
+  const [{ data: people }, { data: itemsRaw }, { data: prioritiesRaw }, { data: statusesRaw }, { data: contactNotes }] =
+    await Promise.all([
+      supabase.from("profiles").select("*").order("name"),
+      supabase
+        .from("braindump_items")
+        .select(
+          "*, bloqueador:profiles!braindump_items_bloqueado_por_fkey(id,name,color), creador:profiles!braindump_items_creado_por_fkey(id,name,color)"
+        )
+        .order("orden", { ascending: true }),
+      supabase.from("weekly_priorities").select("*"),
+      supabase.from("status_updates").select("*"),
+      supabase.from("contact_notes").select("*"),
+    ]);
 
   const adminIds = (people || []).filter((p) => p.sees_all).map((p) => p.id);
   const priorities = Object.fromEntries((prioritiesRaw || []).map((p) => [p.person_id, p]));
@@ -62,6 +65,9 @@ export default async function BraindumpPage() {
           </div>
           <div style={{ flex: "0 0 260px", minWidth: 220 }}>
             <StatusPulseWidget people={people || []} statuses={statusesRaw || []} currentUserId={user.id} />
+          </div>
+          <div style={{ flex: "0 0 260px", minWidth: 220 }}>
+            <ContactNotesWidget notes={contactNotes || []} currentUserId={user.id} />
           </div>
         </div>
       </div>

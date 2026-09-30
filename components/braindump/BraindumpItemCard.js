@@ -30,6 +30,7 @@ export default function BraindumpItemCard({ item, onDragStart, onDragEnd, dragga
   const { color: dayColor, label: dayLabel } = daysRemainingInfo(item.fecha_limite);
   const badge = ESTADO_BADGE[item.estado] || ESTADO_BADGE.sin_aceptar;
   const isSolicitud = item.origen === "solicitud";
+  const isDone = item.estado === "completado";
 
   async function patch(fields) {
     setBusy(true);
@@ -76,12 +77,12 @@ export default function BraindumpItemCard({ item, onDragStart, onDragEnd, dragga
         gridTemplateColumns: draggable ? "14px 1fr auto" : "1fr auto",
         alignItems: "start",
         gap: 8,
-        background: "var(--surface)",
+        background: isDone ? "var(--surface-2)" : "var(--surface)",
         border: "1px solid var(--border)",
         borderLeft: item.estado === "sin_aceptar" ? "3px solid var(--danger)" : "3px solid transparent",
         borderRadius: 9,
         padding: "9px 10px",
-        opacity: busy ? 0.6 : 1,
+        opacity: busy ? 0.6 : isDone ? 0.55 : 1,
       }}
     >
       {draggable && (

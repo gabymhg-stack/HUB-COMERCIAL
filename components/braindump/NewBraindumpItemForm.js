@@ -4,9 +4,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
-// "+ Agregar pendiente" al fondo de cada columna del Board — solo
-// admins llegan a ver esto (el Board completo es admin-only), así que
-// aquí siempre se crea con origen='braindump'.
+// "+ Agregar pendiente" arriba de cada columna del Board — solo admins
+// llegan a ver esto (el Board completo es admin-only), así que aquí
+// siempre se crea con origen='braindump'. El nuevo item se inserta con
+// un "orden" menor al mínimo existente, para que quede hasta arriba de
+// la columna en vez de hasta abajo.
 export default function NewBraindumpItemForm({ personId }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -24,14 +26,15 @@ export default function NewBraindumpItemForm({ personId }) {
       data: { user },
     } = await supabase.auth.getUser();
 
-    // orden nuevo = al final de lo que ya tenga esa persona activo.
+    // orden nuevo = antes de lo que ya tenga esa persona (queda hasta
+    // arriba de su columna), no al final.
     const { data: existing } = await supabase
       .from("braindump_items")
       .select("orden")
       .eq("asignado_a", personId)
-      .order("orden", { ascending: false })
+      .order("orden", { ascending: true })
       .limit(1);
-    const nextOrden = (existing?.[0]?.orden ?? -1) + 1;
+    const nextOrden = (existing?.[0]?.orden ?? 0) - 1;
 
     const { error: insertError } = await supabase.from("braindump_items").insert({
       texto: text.trim(),

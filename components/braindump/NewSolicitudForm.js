@@ -30,6 +30,18 @@ export default function NewSolicitudForm({ people, currentUserId }) {
     setSaving(true);
     setError("");
     const supabase = createClient();
+
+    // Mismo criterio que NewBraindumpItemForm: orden menor al mínimo que
+    // ya tenga esa persona, para que la solicitud le aparezca hasta
+    // arriba de su lista, no hasta abajo.
+    const { data: existing } = await supabase
+      .from("braindump_items")
+      .select("orden")
+      .eq("asignado_a", targetId)
+      .order("orden", { ascending: true })
+      .limit(1);
+    const nextOrden = (existing?.[0]?.orden ?? 0) - 1;
+
     const { error: insertError } = await supabase.from("braindump_items").insert({
       texto: text.trim(),
       asignado_a: targetId,
@@ -37,6 +49,7 @@ export default function NewSolicitudForm({ people, currentUserId }) {
       origen: "solicitud",
       tag: tag || "",
       fecha_limite: fecha || null,
+      orden: nextOrden,
     });
     setSaving(false);
     if (insertError) {
