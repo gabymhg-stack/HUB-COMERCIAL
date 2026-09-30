@@ -63,10 +63,8 @@ export default async function BraindumpPage() {
               currentUserId={user.id}
             />
           </div>
-          <div style={{ flex: "0 0 260px", minWidth: 220 }}>
+          <div style={{ flex: "0 0 260px", minWidth: 220, display: "flex", flexDirection: "column", gap: 16 }}>
             <StatusPulseWidget people={people || []} statuses={statusesRaw || []} currentUserId={user.id} />
-          </div>
-          <div style={{ flex: "0 0 260px", minWidth: 220 }}>
             <ContactNotesWidget notes={contactNotes || []} currentUserId={user.id} />
           </div>
         </div>
